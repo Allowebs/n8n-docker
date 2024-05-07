@@ -1,36 +1,46 @@
 ARG NODE_VERSION=18
-FROM n8nio/base:${NODE_VERSION}
+
+# 1. Use a builder step to download various dependencies
+FROM node:${NODE_VERSION}-alpine as builder
+
+# Install fonts
+RUN	\
+	apk --no-cache add --virtual fonts msttcorefonts-installer fontconfig && \
+	update-ms-fonts && \
+	fc-cache -f && \
+	apk del fonts && \
+	find  /usr/share/fonts/truetype/msttcorefonts/ -type l -exec unlink {} \;
+
+# Install git and other OS dependencies
+RUN apk add --update git openssh graphicsmagick tini tzdata ca-certificates libc6-compat jq
 
 # Install essential packages
-USER root
-RUN apt-get update && apt-get install -y curl
+RUN apk add --no-cache curl
 
 # Install Ghostscript, Tesseract-OCR, x11-utils, and node-tesseract-ocr
-RUN apt-get update && \
-	apt-get install -y ghostscript tesseract-ocr tesseract-ocr-eng x11-utils && \
-	npm install -g node-tesseract-ocr
+RUN apk add --no-cache ghostscript tesseract-ocr tesseract-ocr-lang && \
+	apk add --no-cache x11-utils
 
-ARG N8N_VERSION
-RUN if [ -z "$N8N_VERSION" ] ; then echo "The N8N_VERSION argument is missing!" ; exit 1; fi
+# Update npm and install full-uci
+COPY .npmrc /usr/local/etc/npmrc
+RUN npm install -g npm@9.9.2 full-icu@1.5.0
+RUN npm install -g node-tesseract-ocr
 
-ENV N8N_VERSION=${N8N_VERSION}
-ENV NODE_ENV=production
-ENV N8N_RELEASE_TYPE=stable
-RUN set -eux; \
-	npm install -g --omit=dev n8n@${N8N_VERSION} --ignore-scripts && \
-	npm rebuild --prefix=/usr/local/lib/node_modules/n8n sqlite3 && \
-	rm -rf /usr/local/lib/node_modules/n8n/node_modules/@n8n/chat && \
-	rm -rf /usr/local/lib/node_modules/n8n/node_modules/n8n-design-system && \
-	rm -rf /usr/local/lib/node_modules/n8n/node_modules/n8n-editor-ui/node_modules && \
-	find /usr/local/lib/node_modules/n8n -type f -name "*.ts" -o -name "*.js.map" -o -name "*.vue" | xargs rm -f && \
-	rm -rf /root/.npm
+# Activate corepack, and install pnpm
+WORKDIR /tmp
+COPY package.json ./
+RUN corepack enable && corepack prepare --activate
 
-COPY docker-entrypoint.sh /
-RUN chmod +x /custom_entrypoint.sh
+# Cleanup
+RUN	rm -rf /lib/apk/db /var/cache/apk/ /tmp/* /root/.npm /root/.cache/node /opt/yarn*
 
-RUN \
-	mkdir .n8n && \
-	chown node:node .n8n
-ENV SHELL /bin/sh
-USER node
-ENTRYPOINT ["tini", "--", "/docker-entrypoint.sh"]
+# 2. Start with a new clean image and copy over the added files into a single layer
+FROM node:${NODE_VERSION}-alpine
+COPY --from=builder / /
+
+# Delete this folder to make the base image backward compatible to be able to build older version images
+RUN rm -rf /tmp/v8-compile-cache*
+
+WORKDIR /home/node
+ENV NODE_ICU_DATA /usr/local/lib/node_modules/full-icu
+EXPOSE 5678/tcp
