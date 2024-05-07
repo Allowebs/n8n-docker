@@ -16,13 +16,12 @@ RUN set -eux; \
 	find /usr/local/lib/node_modules/n8n -type f -name "*.ts" -o -name "*.js.map" -o -name "*.vue" | xargs rm -f && \
 	rm -rf /root/.npm
 
-# Install Ghostscript, Tesseract-OCR, and x11-utils
+# Install Ghostscript, Tesseract-OCR, and x11-utils using Alpine's package manager
 USER root
-RUN apt-get update && apt-get install -y \
+RUN apk --no-cache add \
     ghostscript \
     tesseract-ocr \
-    x11-utils \
-    && rm -rf /var/lib/apt/lists/*
+    x11-utils
 
 COPY docker-entrypoint.sh /
 
