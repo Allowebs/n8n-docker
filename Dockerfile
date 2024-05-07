@@ -1,10 +1,10 @@
 ARG NODE_VERSION=18
 FROM n8nio/base:${NODE_VERSION}
 
-ARG N8N_VERSION
+ARG N8N_VERSION=1.39.1
 RUN if [ -z "$N8N_VERSION" ] ; then echo "The N8N_VERSION argument is missing!" ; exit 1; fi
 
-ENV N8N_VERSION=1.39.1
+ENV N8N_VERSION=${N8N_VERSION}
 ENV NODE_ENV=production
 ENV N8N_RELEASE_TYPE=stable
 RUN set -eux; \
