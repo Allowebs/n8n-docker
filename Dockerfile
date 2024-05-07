@@ -5,6 +5,11 @@ FROM n8nio/base:${NODE_VERSION}
 USER root
 RUN apt-get update && apt-get install -y curl
 
+# Install Ghostscript, Tesseract-OCR, x11-utils, and node-tesseract-ocr
+RUN apt-get update && \
+	apt-get install -y ghostscript tesseract-ocr tesseract-ocr-eng x11-utils && \
+	npm install -g node-tesseract-ocr
+
 ARG N8N_VERSION
 RUN if [ -z "$N8N_VERSION" ] ; then echo "The N8N_VERSION argument is missing!" ; exit 1; fi
 
@@ -13,7 +18,6 @@ ENV NODE_ENV=production
 ENV N8N_RELEASE_TYPE=stable
 RUN set -eux; \
 	npm install -g --omit=dev n8n@${N8N_VERSION} --ignore-scripts && \
- npm install -g node-tesseract-ocr && \
 	npm rebuild --prefix=/usr/local/lib/node_modules/n8n sqlite3 && \
 	rm -rf /usr/local/lib/node_modules/n8n/node_modules/@n8n/chat && \
 	rm -rf /usr/local/lib/node_modules/n8n/node_modules/n8n-design-system && \

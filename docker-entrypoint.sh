@@ -6,7 +6,7 @@ if ! command -v gs &> /dev/null; then
     apt-get install -y ghostscript tesseract-ocr tesseract-ocr-eng x11-utils
 fi
 
-# Following the original entrypoint logic
+# Follow the original entrypoint logic
 if [ "$#" -gt 0 ]; then
   # Got started with arguments
   exec n8n "$@"
