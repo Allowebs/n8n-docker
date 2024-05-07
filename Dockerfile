@@ -20,8 +20,7 @@ RUN set -eux; \
 USER root
 RUN apk --no-cache add \
     ghostscript \
-    tesseract-ocr \
-    x11-utils
+    tesseract-ocr
 
 COPY docker-entrypoint.sh /
 
