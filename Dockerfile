@@ -12,14 +12,10 @@ RUN	\
 	find  /usr/share/fonts/truetype/msttcorefonts/ -type l -exec unlink {} \;
 
 # Install git and other OS dependencies
-RUN apk add --update git openssh graphicsmagick tini tzdata ca-certificates libc6-compat jq
-
-# Install essential packages
-RUN apk add --no-cache curl
+RUN apk add --update git openssh graphicsmagick tini tzdata ca-certificates libc6-compat jq nano curl
 
 # Install Ghostscript, Tesseract-OCR, x11-utils, and node-tesseract-ocr
-RUN apk add --no-cache ghostscript tesseract-ocr tesseract-ocr-lang && \
-	apk add --no-cache x11-utils
+RUN apk add --no-cache ghostscript tesseract-ocr tesseract-ocr-lang x11-utils
 
 # Update npm and install full-uci
 COPY .npmrc /usr/local/etc/npmrc
@@ -32,7 +28,7 @@ COPY package.json ./
 RUN corepack enable && corepack prepare --activate
 
 # Cleanup
-RUN	rm -rf /lib/apk/db /var/cache/apk/ /tmp/* /root/.npm /root/.cache/node /opt/yarn*
+RUN rm -rf /lib/apk/db /var/cache/apk/ /tmp/* /root/.npm /root/.cache/node /opt/yarn*
 
 # 2. Start with a new clean image and copy over the added files into a single layer
 FROM node:${NODE_VERSION}-alpine
