@@ -2,8 +2,8 @@
 
 # Install Ghostscript, Tesseract-OCR, and x11-utils if not already installed
 if ! command -v gs > /dev/null 2>&1; then
-    apt-get update
-    apt-get install -y ghostscript tesseract-ocr tesseract-ocr-eng x11-utils
+    apk add update
+    apk add -y ghostscript tesseract-ocr tesseract-ocr-eng x11-utils
 fi
 
 # Follow the original entrypoint logic
